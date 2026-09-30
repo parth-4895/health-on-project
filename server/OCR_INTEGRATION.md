@@ -48,7 +48,7 @@ run, download), then `ready`. Digital PDFs are served before that.
 | `ocr_status` | when |
 | --- | --- |
 | `success` | test rows were recognized with good confidence |
-| `partial` | low OCR confidence (< 0.75), some garbled PDF pages, or **no test rows recognized at all** |
+| `partial` | low mean OCR confidence (< 0.85), some garbled PDF pages, or **no test rows recognized at all** |
 | `failed` | no text could be read, or the OCR service could not be reached |
 
 A metric goes to review (`needs_review`) when its value is not a plain
