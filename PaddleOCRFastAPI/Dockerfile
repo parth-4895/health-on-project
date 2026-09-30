@@ -1,7 +1,7 @@
 # Build from the repository root so the lab-report pipeline (../ocr) is in the
 # build context:   docker build -f PaddleOCRFastAPI/Dockerfile .
 # (docker-compose.yml in this folder already does that.)
-FROM python:3.12-slim-bullseye
+FROM python:3.12-slim-bookworm
 
 EXPOSE 8000
 
