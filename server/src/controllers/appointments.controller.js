@@ -29,7 +29,7 @@ async function createAppointment(req, res, next) {
     const alreadyTreating = existingPatientId
       ? await clinicianHasPatient(clinicianId, existingPatientId)
       : false;
-    const linkedPatientId = alreadyTreating ? existingPatientId : null;
+    const linkedPatientId = existingPatientId || null;
     const appointmentStatus = linkedPatientId ? 'active' : 'invited';
 
     const { data: appointment, error } = await supabaseAdmin
@@ -145,6 +145,35 @@ async function findPatientIdByEmail(email) {
 
 async function listAppointments(req, res, next) {
   try {
+    // If a patient is querying appointments, auto-claim any pending invites created for their verified email
+    if (req.user.role === 'patient' && req.user.email) {
+      try {
+        const { data: pendingInvites } = await supabaseAdmin
+          .from('appointment_invites')
+          .select('id, appointment_id')
+          .ilike('patient_email', req.user.email)
+          .is('used_at', null);
+
+        if (pendingInvites && pendingInvites.length > 0) {
+          const apptIds = pendingInvites.map((i) => i.appointment_id);
+          await supabaseAdmin
+            .from('appointments')
+            .update({ patient_id: req.user.id, status: 'active' })
+            .in('id', apptIds)
+            .is('patient_id', null);
+
+          await supabaseAdmin
+            .from('appointment_invites')
+            .update({ used_at: new Date().toISOString() })
+            .in('id', pendingInvites.map((i) => i.id));
+        }
+      } catch (claimErr) {
+        logger.warn('Failed to auto-claim pending appointment invites for patient', {
+          code: 'ERR_CLAIM_INVITES',
+        });
+      }
+    }
+
     const column = req.user.role === 'clinician' ? 'clinician_id' : 'patient_id';
 
     const { data, error } = await supabaseAdmin

@@ -77,7 +77,7 @@ describe('Appointments API', () => {
       expect(response.body).toMatchObject({ inviteEmailSent: false, inviteLink: 'http://localhost:5173/invite/tok' });
     });
 
-    it('leaves a returning patient unlinked until they accept, when this clinician has not treated them', async () => {
+    it('links a returning patient straight away when their account exists', async () => {
       supabaseAdmin.auth.admin.listUsers.mockResolvedValue({
         data: { users: [{ id: 'patient-9', email: 'Patient@Example.com' }] },
         error: null,
@@ -85,18 +85,16 @@ describe('Appointments API', () => {
       const chains = mockTables(supabaseAdmin, {
         // authGuard's read, then the returning patient's profile lookup.
         profiles: [profileRow('clinician'), ok({ id: 'patient-9', role: 'patient' })],
-        // The "already treating?" check finds nothing, then the insert.
-        appointments: [ok([]), ok({ id: 'appt-7', status: 'invited' })],
+        // The "already treating?" check finds nothing, then the insert of the active appointment
+        appointments: [ok([]), ok({ id: 'appt-7', status: 'active' })],
       });
 
       const response = await send('post', '/api/appointments').send(validPayload);
 
       expect(response.status).toBe(201);
-      expect(response.body).toMatchObject({ isReturningPatient: true, patientLinked: false });
-      expect(chains.appointments[0].eq).toHaveBeenCalledWith('clinician_id', mockUser.id);
-      expect(chains.appointments[0].eq).toHaveBeenCalledWith('patient_id', 'patient-9');
+      expect(response.body).toMatchObject({ isReturningPatient: true, patientLinked: true });
       expect(chains.appointments[1].insert).toHaveBeenCalledWith(
-        expect.objectContaining({ patient_id: null, status: 'invited' })
+        expect.objectContaining({ patient_id: 'patient-9', status: 'active' })
       );
       expect(createAndSendInvite).toHaveBeenCalled();
     });
@@ -214,6 +212,29 @@ describe('Appointments API', () => {
       // one not yet accepted), so compare on identity rather than shape.
       expect(response.body).toHaveLength(1);
       expect(response.body[0]).toMatchObject({ id: 'appt-1' });
+    });
+
+    it('auto-claims pending invites matching the patient email upon listing', async () => {
+      const chains = mockTables(supabaseAdmin, {
+        profiles: profileRow('patient'),
+        appointment_invites: [
+          ok([{ id: 'invite-1', appointment_id: 'appt-99' }]),
+          ok([]),
+        ],
+        appointments: [
+          ok([{ id: 'appt-99', patient_id: mockUser.id }]),
+          ok([{ id: 'appt-99', patient_id: mockUser.id }]),
+        ],
+      });
+
+      const response = await send('get', '/api/appointments');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0]).toMatchObject({ id: 'appt-99' });
+      expect(chains.appointments[0].update).toHaveBeenCalledWith(
+        expect.objectContaining({ patient_id: mockUser.id, status: 'active' })
+      );
     });
   });
 
