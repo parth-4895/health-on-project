@@ -37,7 +37,7 @@ function startSafetyServer(options = {}) {
     process.stderr.write('Community LLM bypass enabled for synthetic testing; pattern removal and rules remain active.\n');
   }
   const app = createSafetyService({
-    db: createDatabase(env.COMMUNITY_WORKER_DATABASE_URL),
+    db: createDatabase(env.COMMUNITY_SAFETY_DATABASE_URL || env.COMMUNITY_WORKER_DATABASE_URL),
     screen,
     secret: env.COMMUNITY_SAFETY_SERVICE_KEY,
   });

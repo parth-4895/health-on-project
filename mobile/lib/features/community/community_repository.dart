@@ -30,6 +30,7 @@ class CommunityRepository {
       '/api/community$path',
       method: 'POST',
       body: {...body, 'requestKey': requestKey},
+      timeout: const Duration(seconds: 60),
     );
     _pendingKeys.remove(fingerprint);
     return result;

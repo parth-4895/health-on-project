@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const path = require('node:path');
 const logger = require('../utils/logger');
 const config = require('../config/community.config');
 const { startIdentityServer } = require('./identity-service');
@@ -10,6 +11,13 @@ let identityServer = null;
 let safetyServer = null;
 let sweeperIntervalId = null;
 let isSweeping = false;
+
+function resolveRulesFile(filePath) {
+  if (filePath && fs.existsSync(filePath)) return filePath;
+  const repoRules = path.resolve(__dirname, '../config/community-rules.json');
+  if (fs.existsSync(repoRules)) return repoRules;
+  return null;
+}
 
 /**
  * Validates whether the minimum required settings for in-process community
@@ -25,7 +33,7 @@ function isConfigured(cfg) {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
     return false;
   }
-  if (!cfg.rulesFile || !fs.existsSync(cfg.rulesFile)) {
+  if (!resolveRulesFile(cfg.rulesFile)) {
     return false;
   }
   return true;
@@ -78,16 +86,22 @@ function start(options = {}) {
 
     // 2. Start Safety Service on loopback
     const safetyDb = cfg.safetyDatabaseUrl || cfg.workerDatabaseUrl;
+    const rulesFile = resolveRulesFile(cfg.rulesFile);
     safetyServer = startSafetyServer({
       port: cfg.safetyPort,
       host: cfg.safetyHost,
       env: {
         ...process.env,
+        COMMUNITY_SAFETY_DATABASE_URL: safetyDb,
         COMMUNITY_WORKER_DATABASE_URL: safetyDb,
         COMMUNITY_SAFETY_SERVICE_KEY: cfg.safetyServiceKey,
         COMMUNITY_SAFETY_PORT: cfg.safetyPort,
-        COMMUNITY_RULES_FILE: cfg.rulesFile,
+        COMMUNITY_RULES_FILE: rulesFile,
+        COMMUNITY_LLM_PROVIDER: cfg.llmProvider,
+        COMMUNITY_GEMINI_MODEL: cfg.geminiModel,
+        GEMINI_API_KEY: cfg.geminiApiKey,
         COMMUNITY_LLM_BYPASS: cfg.llmBypass ? 'true' : 'false',
+        COMMUNITY_LLM_TIMEOUT_MS: cfg.llmTimeoutMs,
         OLLAMA_URL: cfg.ollamaUrl,
         COMMUNITY_MODEL: cfg.communityModel,
         COMMUNITY_MODEL_VERSION: cfg.communityModelVersion,

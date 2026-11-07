@@ -1,0 +1,97 @@
+[
+  {
+    "phrase": "synthetic urgent test",
+    "tier": "urgent",
+    "code": "TEST_URGENT"
+  },
+  {
+    "phrase": "synthetic review test",
+    "tier": "soon",
+    "code": "TEST_SOON"
+  },
+  {
+    "phrase": "hurt myself",
+    "tier": "urgent",
+    "code": "FLAG_CRISIS_HARM_EN"
+  },
+  {
+    "phrase": "खुद को नुकसान",
+    "tier": "urgent",
+    "code": "FLAG_CRISIS_HARM_HI"
+  },
+  {
+    "phrase": "khud ko nuksan",
+    "tier": "urgent",
+    "code": "FLAG_CRISIS_HARM_HINGLISH"
+  },
+  {
+    "phrase": "severe bleeding",
+    "tier": "urgent",
+    "code": "FLAG_ACUTE_BLEEDING_EN"
+  },
+  {
+    "phrase": "bohot bleeding",
+    "tier": "urgent",
+    "code": "FLAG_ACUTE_BLEEDING_HINGLISH"
+  },
+  {
+    "phrase": "heavy bleeding",
+    "tier": "urgent",
+    "code": "FLAG_ACUTE_HEAVY_BLEEDING"
+  },
+  {
+    "phrase": "no baby movement",
+    "tier": "urgent",
+    "code": "FLAG_REDUCED_MOVEMENT_EN"
+  },
+  {
+    "phrase": "baby movement band",
+    "tier": "urgent",
+    "code": "FLAG_REDUCED_MOVEMENT_HINGLISH"
+  },
+  {
+    "phrase": "baby hil nahi raha",
+    "tier": "urgent",
+    "code": "FLAG_REDUCED_MOVEMENT_HI"
+  },
+  {
+    "phrase": "severe headache and blurred vision",
+    "tier": "urgent",
+    "code": "FLAG_SEVERE_PREECLAMPSIA_SIGNS"
+  },
+  {
+    "phrase": "high fever and chills",
+    "tier": "urgent",
+    "code": "FLAG_HIGH_FEVER_SEPSIS_RISK"
+  },
+  {
+    "phrase": "water broke early",
+    "tier": "urgent",
+    "code": "FLAG_PRETERM_RUPTURE"
+  },
+  {
+    "phrase": "constant vomiting",
+    "tier": "soon",
+    "code": "FLAG_DEHYDRATION_HYPEREMESIS"
+  },
+  {
+    "phrase": "swollen legs and face",
+    "tier": "soon",
+    "code": "FLAG_MODERATE_EDEMA"
+  },
+  {
+    "phrase": "burning urination",
+    "tier": "soon",
+    "code": "FLAG_URINARY_DISCOMFORT"
+  },
+  {
+    "phrase": "mild cramping",
+    "tier": "soon",
+    "code": "FLAG_MILD_CRAMPING"
+  },
+  {
+    "phrase": "very anxious",
+    "tier": "soon",
+    "code": "FLAG_PERINATAL_MENTAL_HEALTH"
+  }
+]

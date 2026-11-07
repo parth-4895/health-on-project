@@ -133,3 +133,78 @@ test('redaction endpoint keeps pattern removal and authentication in bypass mode
   expect(response.body).toEqual({ text: 'Synthetic label [email removed]' });
   expect(fetchSpy).not.toHaveBeenCalled();
 });
+
+describe('Gemini Screening Provider', () => {
+  test('throws if GEMINI_API_KEY is missing when provider is gemini', () => {
+    expect(() => localScreening({
+      NODE_ENV: 'production',
+      COMMUNITY_RULES_FILE: rulesFile,
+      COMMUNITY_LLM_PROVIDER: 'gemini',
+    })).toThrow(/GEMINI_API_KEY is not configured/);
+  });
+
+  test('screens text using Gemini API for redaction and classification', async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ identifiers: ['Apollo Hospital'] }) }] } }],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ tier: 'normal' }) }] } }],
+        }),
+      });
+
+    const screen = localScreening({
+      NODE_ENV: 'production',
+      COMMUNITY_RULES_FILE: rulesFile,
+      COMMUNITY_LLM_PROVIDER: 'gemini',
+      GEMINI_API_KEY: 'synthetic-gemini-key',
+      COMMUNITY_GEMINI_MODEL: 'gemini-3.5-flash-lite',
+    });
+
+    const result = await screen('I visited Apollo Hospital for routine checks.');
+    expect(result.body).toBe('I visited [identifying detail removed] for routine checks.');
+    expect(result.tier).toBe('normal');
+    expect(result.state).toBe('normal');
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy.mock.calls[0][0]).toContain('gemini-3.5-flash-lite:generateContent');
+  });
+
+  test('falls back to candidate model when first candidate returns 503', async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        text: async () => 'Overloaded',
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ identifiers: [] }) }] } }],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify({ tier: 'normal' }) }] } }],
+        }),
+      });
+
+    const screen = localScreening({
+      NODE_ENV: 'production',
+      COMMUNITY_RULES_FILE: rulesFile,
+      COMMUNITY_LLM_PROVIDER: 'gemini',
+      GEMINI_API_KEY: 'synthetic-gemini-key',
+      COMMUNITY_GEMINI_MODEL: 'gemini-3.5-flash-lite',
+    });
+
+    const result = await screen('Healthy routine question.');
+    expect(result.body).toBe('Healthy routine question.');
+    expect(result.tier).toBe('normal');
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+  });
+});

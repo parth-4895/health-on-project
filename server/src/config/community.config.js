@@ -41,7 +41,11 @@ module.exports = {
   fcmCredentialsFile: env.COMMUNITY_FCM_CREDENTIALS_FILE || '',
 
   // LLM screening controls
+  llmProvider: env.COMMUNITY_LLM_PROVIDER || (env.GEMINI_API_KEY ? 'gemini' : 'ollama'),
+  geminiApiKey: env.GEMINI_API_KEY || env.LLM_API_KEY || '',
+  geminiModel: env.COMMUNITY_GEMINI_MODEL || 'gemini-3.5-flash-lite',
   llmBypass: env.COMMUNITY_LLM_BYPASS === 'true',
+  llmTimeoutMs: Number(env.COMMUNITY_LLM_TIMEOUT_MS || 30000),
   ollamaUrl: env.OLLAMA_URL || 'http://127.0.0.1:11434',
   communityModel: env.COMMUNITY_MODEL || '',
   communityModelVersion: env.COMMUNITY_MODEL_VERSION || '',
